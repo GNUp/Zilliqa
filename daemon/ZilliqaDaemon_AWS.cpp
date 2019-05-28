@@ -52,6 +52,7 @@ const string PRIVKEY_OPT = "--privk";
 const string PUBKEY_OPT = "--pubk";
 const string IP_OPT = "--address";
 const string PORT_OPT = "--port";
+const string LOGPATH_OPT = "--logpath";
 const string SUSPEND_LAUNCH = "/run/zilliqa/SUSPEND_LAUNCH";
 const string start_downloadScript = "python /run/zilliqa/downloadIncrDB.py";
 
@@ -59,6 +60,7 @@ unordered_map<int, string> PrivKey;
 unordered_map<int, string> PubKey;
 unordered_map<int, string> IP;
 unordered_map<int, string> Port;
+unordered_map<int, string> LogPath;
 unordered_map<int, string> Path;
 
 enum SyncType : unsigned int {
@@ -193,6 +195,15 @@ vector<pid_t> getProcIdByName(string procName, ofstream& log) {
                 fullLine = fullLine.substr(space_pos + 1);
                 continue;
               }
+
+              if (token == LOGPATH_OPT) {
+                space_pos = (string::npos == fullLine.find('\0'))
+                                ? fullLine.size()
+                                : fullLine.find('\0');
+                LogPath[id] = fullLine.substr(0, space_pos);
+                fullLine = fullLine.substr(space_pos + 1);
+                continue;
+              }
             }
 
             Path[id] = path;
@@ -255,8 +266,9 @@ bool DownloadPersistenceFromS3() {
 }
 
 void StartNewProcess(const string& pubKey, const string& privKey,
-                     const string& ip, const string& port, const string& path,
-                     bool cseed, ofstream& log) {
+                     const string& ip, const string& port,
+                     const string& logPath, const string& path, bool cseed,
+                     ofstream& log) {
   log << "Create new Zilliqa process..." << endl;
   signal(SIGCHLD, SIG_IGN);
   pid_t pid;
@@ -290,7 +302,8 @@ void StartNewProcess(const string& pubKey, const string& privKey,
     }
     log << "\" "
         << execute(restart_zilliqa + " " + pubKey + " " + privKey + " " + ip +
-                   " " + port + " " + syncType + " " + path + " 2>&1")
+                   " " + port + " " + syncType + " " + logPath + " " + path +
+                   " 2>&1")
         << " \"" << endl;
     exit(0);
   }
@@ -339,13 +352,14 @@ void MonitorProcess(unordered_map<string, vector<pid_t>>& pids,
         pids[name].erase(it);
       }
 
-      StartNewProcess(PubKey[pid], PrivKey[pid], IP[pid], Port[pid], Path[pid],
-                      cseed, log);
+      StartNewProcess(PubKey[pid], PrivKey[pid], IP[pid], Port[pid],
+                      LogPath[pid], Path[pid], cseed, log);
       died.erase(pid);
       PrivKey.erase(pid);
       PubKey.erase(pid);
       IP.erase(pid);
       Port.erase(pid);
+      LogPath.erase(pid);
       Path.erase(pid);
     }
   }
