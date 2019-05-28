@@ -40,13 +40,11 @@ RUN apt-get update \
     libleveldb-dev \
     libmicrohttpd-dev \
     libminiupnpc-dev \
-    libprotobuf-dev \
     libsnappy-dev \
     libssl-dev \
     libtool \
     ocl-icd-opencl-dev \
     pkg-config \
-    protobuf-compiler \
     python \
     python-pip \
     libsecp256k1-dev \
@@ -63,6 +61,7 @@ ARG EXTRA_CMAKE_ARGS=
 
 RUN git clone ${REPO} ${SOURCE_DIR} \
     && git -C ${SOURCE_DIR} checkout ${COMMIT} \
+    && ./scripts/download_proto3.sh \
     && cmake -H${SOURCE_DIR} -B${BUILD_DIR} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
         -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${EXTRA_CMAKE_ARGS} \
     && cmake --build ${BUILD_DIR} -- -j$(nproc) \
