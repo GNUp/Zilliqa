@@ -195,6 +195,8 @@ Zilliqa::Zilliqa(const PairOfKey& key, const Peer& peer, SyncType syncType,
 
     while(true) {
       LOG_GENERAL(INFO, "heyhey");
+      m_mediator.m_lookup->GetDSInfoLoop();
+      this_thread::sleep_for(chrono::seconds(NEW_NODE_SYNC_INTERVAL));
     }
   };
   DetachedFunction(1, func);
