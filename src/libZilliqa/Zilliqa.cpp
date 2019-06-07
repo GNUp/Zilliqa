@@ -56,6 +56,10 @@ void Zilliqa::LogSelfNodeInfo(const PairOfKey& key, const Peer& peer) {
 
   LOG_GENERAL(INFO, "My address is " << toAddr << " and port is "
                                      << peer.m_listenPortHost);
+  LOG_GENERAL(INFO, "My address is " << toAddr << " and port is "
+                                     << peer.m_listenPortHost);  
+  LOG_GENERAL(INFO, "My address is " << toAddr << " and port is "
+                                     << peer.m_listenPortHost);
 }
 
 /*static*/ std::string Zilliqa::FormatMessageName(unsigned char msgType,
@@ -232,9 +236,7 @@ Zilliqa::Zilliqa(const PairOfKey& key, const Peer& peer, SyncType syncType,
         break;
       }
     }
-    LOG_GENERAL(INFO, "heyhey");
-    m_mediator.m_lookup->GetDSInfoLoop();
-    m_mediator.m_lookup->GetShardFromLookup();
+    
     switch (syncType) {
       case SyncType::NO_SYNC:
         LOG_GENERAL(INFO, "No Sync Needed");
