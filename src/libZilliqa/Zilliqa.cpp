@@ -56,6 +56,10 @@ void Zilliqa::LogSelfNodeInfo(const PairOfKey& key, const Peer& peer) {
 
   LOG_GENERAL(INFO, "My address is " << toAddr << " and port is "
                                      << peer.m_listenPortHost);
+  LOG_GENERAL(INFO, "My address is " << toAddr << " and port is "
+                                     << peer.m_listenPortHost); 
+  LOG_GENERAL(INFO, "My address is " << toAddr << " and port is "
+                                     << peer.m_listenPortHost);
 }
 
 /*static*/ std::string Zilliqa::FormatMessageName(unsigned char msgType,
