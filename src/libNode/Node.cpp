@@ -1000,8 +1000,12 @@ void Node::StartSynchronization() {
       LOG_GENERAL(WARNING, "Cannot rejoin currently");
       return;
     }
-
-    while (m_mediator.m_lookup->GetSyncType() != SyncType::NO_SYNC) {
+    ofstream myfile;
+    myfile.open("./Zilliqa_memberships.txt", ios_base::app);
+    uint64_t epochNum = m_mediator.m_dsBlockChain.GetLastBlock().GetHeader().GetBlockNum();
+    int idx;
+    while (true) {
+      // Make sync
       m_mediator.m_lookup->ComposeAndSendGetDirectoryBlocksFromSeed(
           m_mediator.m_blocklinkchain.GetLatestIndex() + 1);
       m_synchronizer.FetchLatestTxBlockSeed(
@@ -1009,10 +1013,64 @@ void Node::StartSynchronization() {
           // m_mediator.m_txBlockChain.GetBlockCount());
           m_mediator.m_txBlockChain.GetLastBlock().GetHeader().GetBlockNum() +
               1);
-      this_thread::sleep_for(chrono::seconds(m_mediator.m_lookup->m_startedPoW
-                                                 ? POW_WINDOW_IN_SECONDS
-                                                 : NEW_NODE_SYNC_INTERVAL));
+      
+      if (m_mediator.m_dsBlockChain.GetLastBlock().GetHeader().GetBlockNum() > epochNum) {
+        epochNum = m_mediator.m_dsBlockChain.GetLastBlock().GetHeader().GetBlockNum();
+
+	// Get the new sharding structures
+      	m_mediator.m_lookup->GetShardFromLookup();
+      	this_thread::sleep_for(chrono::seconds(10));
+
+        // Track the network memberships information
+        myfile << "==================================================New memberships==================================================" << endl;
+        myfile << "Current epoch number: " << epochNum << endl;
+        myfile << "Number of shards: " << m_mediator.m_ds->GetNumShards() << endl;
+        myfile << "Number of DS committee: " << m_mediator.m_DSCommittee -> size() << endl;
+        // Print DS
+        myfile << "==================================================DS memberships==================================================" << endl;
+        DequeOfNode::iterator itn = m_mediator.m_DSCommittee -> begin();
+        idx = 0;
+        while(itn != m_mediator.m_DSCommittee -> end()) {
+            Peer peer = get<1>(*itn);
+            if(Guard::GetInstance().IsNodeInDSGuardList(get<0>(*itn))) {
+              myfile << idx << "[Guard]: pubkey(" << get<0>(*itn) << "), ip:port(" << peer << ")" << endl;
+            } else {
+              myfile << idx << ": pubkey(" << get<0>(*itn) << "), ip:port(" << peer << ")" << endl;
+            }
+            idx++;
+            itn++;
+        }
+
+        // Print shard
+        myfile << "==================================================Shard memberships==================================================" << endl;
+        DequeOfShard::iterator itd = m_mediator.m_ds->m_shards.begin();
+        while (itd != m_mediator.m_ds->m_shards.end()) {
+          myfile << (itd - m_mediator.m_ds->m_shards.begin()) << "th Shard (" << (*itd).size() << ") :" << endl;
+
+          Shard::iterator itv = (*itd).begin();
+          idx = 0;
+          while (itv != (*itd).end()) {
+            Peer peer = get<1>(*itv);
+            uint16_t reputation = get<2>(*itv);
+
+            if(Guard::GetInstance().IsNodeInShardGuardList(get<0>(*itv))) {
+              myfile << idx << "[Guard]: pubkey(" << get<0>(*itv) << "), ip:port(" << peer << "), reputation(" << reputation << ")" << endl;
+            } else {
+              myfile << idx << ": pubkey(" << get<0>(*itv) << "), ip:port(" << peer << "), reputation(" << reputation << ")" << endl;
+            }
+
+            itv++;
+            idx++;
+          }
+
+          itd++;
+        }
+      }
+
+      myfile << flush;
+      this_thread::sleep_for(chrono::seconds(45));
     }
+    myfile.close();
   };
 
   DetachedFunction(1, func);
